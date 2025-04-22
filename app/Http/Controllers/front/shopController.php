@@ -197,7 +197,7 @@ class shopController extends Controller
                 $orderItem->total  = $item->qty * $item->price;
                 $orderItem->save();
             }
-
+            orderMail($order->id);
             Cart::Destroy();
             session()->forget('discount');
             return response()->json([

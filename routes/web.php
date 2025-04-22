@@ -152,3 +152,10 @@ Route::group(['prefix' => '/admin'], function () {
 });
 Route::get('/stripe', [paymentController::class, 'index'])->name('payment-index');
 Route::post('/stripe', [paymentController::class, 'catch'])->name('payment-catch');
+
+// Route::get('/test', function () {
+//     return orderMail(30);
+// });
+
+
+
