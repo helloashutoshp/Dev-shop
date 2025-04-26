@@ -17,7 +17,7 @@ class paymentController extends Controller
         $amount = $request->input('price');
         $payment = $stripe->charges->create([
             'amount' => $amount * 100, // Convert to smallest currency unit
-            'currency' => 'INR',
+            'currency' => 'USD',
             'source' => $request->input('stripe_id'),
             'description' => 'Order Payment',
         ]);

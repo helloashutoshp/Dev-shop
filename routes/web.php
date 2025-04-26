@@ -60,6 +60,9 @@ Route::group(['prefix' => '/account'], function () {
         Route::post('/apply-coupon', [shopController::class, 'couponStore'])->name('apply-coupon');
         Route::get('/my-orders', [shopController::class, 'orders'])->name('my-order');
         Route::get('/order-items/{id}', [shopController::class, 'ordersItems'])->name('order-detail');
+        Route::get('/profile', [authController::class, 'profile'])->name('user-profile');
+        Route::get('/wishlist', [shopController::class, 'wishlist'])->name('user-wishlist');
+        Route::post('/remove-wishlist', [shopController::class, 'removeWishlist'])->name('remove.wishlist');
     });
 });
 

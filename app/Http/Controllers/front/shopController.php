@@ -7,6 +7,7 @@ use App\Models\CountryModel;
 use App\Models\discountModel;
 use App\Models\orderModel;
 use App\Models\oredrItem;
+use App\Models\WishList;
 use App\Models\Product;
 use App\Models\shippingCharge;
 use App\Models\userShipping;
@@ -414,19 +415,73 @@ class shopController extends Controller
         $orders = orderModel::where('user_id', $user->id)->get();
         return view('front.orders', ['orders' => $orders]);
     }
-    public function ordersItems($id){
+    public function ordersItems($id)
+    {
         $orderItem = orderModel::find($id);
-        $items = oredrItem::where('order_id',$id)->get();
+        $items = oredrItem::where('order_id', $id)->get();
         $count = $items->count();
-        return view('front.orderItem',['orderItem'=>$orderItem,'items'=>$items,'count'=> $count]); 
+        return view('front.orderItem', ['orderItem' => $orderItem, 'items' => $items, 'count' => $count]);
     }
 
-    public function addWishlist(Request $request){
-        if(Auth::check() == false){
+    public function addWishlist(Request $request)
+    {
+        if (Auth::check() == false) {
             session(['url.checkout' => url()->previous()]);
             return response()->json([
                 'status' => false
             ]);
         }
+        $user = Auth::user();
+        $product_id = $request->id;
+
+        // Check if already in wishlist
+        $exists = WishList::where('user_id', $user->id)
+            ->where('product_id', $product_id)
+            ->first();
+        // dd($exists);/
+        if (!$exists) {
+            $wishlist = new WishList();
+            $wishlist->user_id = $user->id;
+            $wishlist->product_id = $product_id;
+            $wishlist->save();
+            session()->flash('success', 'Successfully product added in wishlist');
+            return response()->json([
+                'status' => true,
+                'message' => 'Product added to wishlist'
+            ]);
+        } else {
+            session()->flash('error', 'Product already in wishlist');
+            return response()->json([
+                'status' => true,
+                'message' => 'Product already in wishlist'
+            ]);
+        }
+    }
+
+    public function wishlist()
+    {
+        $items = WishList::where('user_id', Auth::user()->id)->with('product')->get();
+        return view('front.wishlist', ['items' => $items]);
+    }
+
+    public function removeWishlist(Request $request)
+    {
+        $wishlist = WishList::where('user_id', Auth::user()->id)
+            ->where('product_id', $request->id)
+            ->first();
+
+        if ($wishlist) {
+            $wishlist->delete();
+            session()->flash('success', 'Successfully product removed from wishlist');
+            return response()->json([
+                'status' => true,
+                'message' => 'Item removed from wishlist'
+            ]);
+        }
+
+        return response()->json([
+            'status' => false,
+            'message' => 'Item not found in wishlist'
+        ]);
     }
 }
