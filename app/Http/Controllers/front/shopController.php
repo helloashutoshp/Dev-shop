@@ -420,4 +420,13 @@ class shopController extends Controller
         $count = $items->count();
         return view('front.orderItem',['orderItem'=>$orderItem,'items'=>$items,'count'=> $count]); 
     }
+
+    public function addWishlist(Request $request){
+        if(Auth::check() == false){
+            session(['url.checkout' => url()->previous()]);
+            return response()->json([
+                'status' => false
+            ]);
+        }
+    }
 }

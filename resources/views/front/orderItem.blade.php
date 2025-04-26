@@ -49,7 +49,7 @@
                                                 <span class="badge bg-success">{{ $orderItem->delivery_status }}</span>
                                             @elseif($orderItem->delivery_status == 'pending')
                                                 <span class="badge bg-warning">{{ $orderItem->delivery_status }}</span>
-                                            @elseif($order->delivery_status == 'cancelled')
+                                            @elseif($orderItem->delivery_status == 'cancelled')
                                                 <span class="badge bg-danger">{{ $order->delivery_status }}</span>
                                             @else
                                                 <span class="badge bg-info">{{ $orderItem->delivery_status }}</span>

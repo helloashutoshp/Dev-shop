@@ -126,20 +126,6 @@
                             </form>
                         </div>
                     </div>
-                    <div class="card">
-                        <div class="card-body">
-                            <h2 class="h4 mb-3">Send Inovice Email</h2>
-                            <div class="mb-3">
-                                <select name="status" id="status" class="form-control">
-                                    <option value="">Customer</option>
-                                    <option value="">Admin</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <button class="btn btn-primary">Send</button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

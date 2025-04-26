@@ -36,7 +36,8 @@ class authController extends Controller
                 // $admin = Auth::guard('admin')->user();
                 // if ($admin->role == 1) {
                     if ((session()->has('url.checkout'))) {
-                        return redirect()->route('checkOut');
+                        // dd(session()->get('url.checkout'));
+                        return redirect(session()->get('url.checkout'));
                     }
                 return redirect()->route('user-profile');
                 // } else {

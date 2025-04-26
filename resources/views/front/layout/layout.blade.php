@@ -65,7 +65,7 @@
                     </a>
                 </div>
                 <div class="col-lg-6 col-6 text-left  d-flex justify-content-end align-items-center">
-                    <a href="{{route('user-profile')}}" class="nav-link text-dark">My Account</a>
+                    <a href="{{ route('user-profile') }}" class="nav-link text-dark">My Account</a>
                     <form action="">
                         <div class="input-group">
                             <input type="text" placeholder="Search For Products" class="form-control"
@@ -235,6 +235,24 @@
 
                     } else {
                         alert("Product already exit in cart");
+                    }
+                }
+            })
+        }
+
+
+        function addToWishlist(id) {
+            // e.preventDefault();
+            $.ajax({
+                url: "{{ route('add.wishlist') }}",
+                data: {
+                    id: id
+                },
+                method: 'POST',
+                dataType: 'json',
+                success: function(response) {
+                    if (response['status'] == false) {
+                        window.location.href = "{{route('userLogin')}}";
                     }
                 }
             })
