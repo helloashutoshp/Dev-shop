@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\front;
 
 use App\Http\Controllers\Controller;
+use App\Models\CountryModel;
 use App\Models\User;
+use App\Models\userShipping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -35,10 +37,10 @@ class authController extends Controller
                 // dd("hello");
                 // $admin = Auth::guard('admin')->user();
                 // if ($admin->role == 1) {
-                    if ((session()->has('url.checkout'))) {
-                        // dd(session()->get('url.checkout'));
-                        return redirect(session()->get('url.checkout'));
-                    }
+                if ((session()->has('url.checkout'))) {
+                    // dd(session()->get('url.checkout'));
+                    return redirect(session()->get('url.checkout'));
+                }
                 return redirect()->route('user-profile');
                 // } else {
                 // $admin = Auth::guard('admin')->logout();
@@ -96,11 +98,74 @@ class authController extends Controller
     {
         $user = Auth::id();
         $user = User::find($user);
-        return view('front.profile', ['user' => $user]);
+        $address = userShipping::where('user_id', $user->id)->first();
+        $country = CountryModel::all();
+        return view('front.profile', ['user' => $user, 'address' => $address, 'country' => $country]);
     }
     public function logout()
     {
         Auth::logout();
         return view('front.auth.login');
+    }
+
+    public function profileUpdate(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'name' => 'required',
+            'phone' => 'required|digits:10',
+        ]);
+
+        if ($validate->passes()) {
+            $user = User::find($request->user_id);
+            $user->name = $request->name;
+            $user->phone = $request->phone;
+            $user->save();
+            session()->flash('success', 'Profile updated');
+            return response()->json([
+                'status' => true,
+                'message' => 'Profile updated'
+            ]);
+        } else {
+            return response()->json([
+                'status' => false,
+                'errors' => $validate->errors()
+            ]);
+        }
+    }
+    public function addressUpdate(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'country' => 'required',
+            'address' => 'required',
+            'appartment' => 'required',
+            'city' => 'required',
+            'state' => 'required',
+            'zip' => 'required',
+            'address_mobile' => 'required|digits:10',
+        ]);
+        if ($validate->passes()) {
+            $address = userShipping::updateOrCreate(
+                ['id' => $request->address_id],
+                [
+                    'country_id' => $request->country,
+                    'address' => $request->address,
+                    'appartment' => $request->appartment,
+                    'city' => $request->city,
+                    'state' => $request->state,
+                    'zip' => $request->zip,
+                    'mobile' => $request->address_mobile,
+                    'user_id' => auth()->id(),
+                ]
+            );
+            session()->flash('success', 'Address updated');
+            return response()->json([
+                'status' => true,
+                'message' => 'Address updated'
+            ]);
+        }
+        return response()->json([
+            'status' => false,
+            'errors' => $validate->errors()
+        ]);
     }
 }

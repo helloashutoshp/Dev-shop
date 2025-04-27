@@ -65,6 +65,9 @@ class shoppingController extends Controller
             $sort = "";
         }
 
+        if (!empty($request->search)) {
+            $product = $product->where('title', 'like', '%' . $request->search . '%');
+        }
         $product = $product->paginate(10);
 
         return view('front.shop', ['category' => $category, 'brand' => $brand, 'product' => $product, 'categorySelected' => $categorySelected, 'subCategorySelected' => $subCategorySelected, 'brandValue' => $brandValue, 'priceTo' => $priceTo, 'priceFrom' => $priceFrom, 'sort' => $sort]);

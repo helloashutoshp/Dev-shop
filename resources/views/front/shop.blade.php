@@ -204,6 +204,10 @@
             if (brand.length > 0) {
                 url += '&brands=' + brand.toString();
             }
+            var search = $('#search').val();
+            if (search) {
+                url += '&search=' + search;
+            }
 
             var price = $('#price').val();
 

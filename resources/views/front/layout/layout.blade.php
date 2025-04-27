@@ -65,14 +65,17 @@
                     </a>
                 </div>
                 <div class="col-lg-6 col-6 text-left  d-flex justify-content-end align-items-center">
-                    <a href="{{ route('user-profile') }}" class="nav-link text-dark">My Account</a>
-                    <form action="">
+                    @if (Auth::check() == false)
+                        <a href="{{ route('userLogin') }}" class="nav-link text-dark">Signin</a>
+                    @else
+                        <a href="{{ route('user-profile') }}" class="nav-link text-dark">My Account</a>
+                    @endif
+                    <form action="{{ route('shop') }}" method="get">
                         <div class="input-group">
-                            <input type="text" placeholder="Search For Products" class="form-control"
-                                aria-label="Amount (to the nearest dollar)">
-                            <span class="input-group-text">
-                                <i class="fa fa-search"></i>
-                            </span>
+                            <input type="text" name="search" id="search" placeholder="Search For Products"
+                                class="form-control" aria-label="Amount (to the nearest dollar)"
+                                value="{{ Request::get('search') }}">
+                            <button type="submit" class="input-group-text"><i class="fa fa-search"></i></button>
                         </div>
                     </form>
                 </div>
@@ -188,9 +191,9 @@
             </div>
         </div>
     </footer>
-    <script src="{{ asset('admin-assets/plugins/jquery/jquery.min.js') }}"></script>
+    <script src="{{ asset('front-assets/js/jquery-3.6.0.min.js') }}"></script>
     <!-- Bootstrap 4 -->
-    <script src="{{ asset('admin-assets/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('front-assets/js/bootstrap.bundle.5.1.3.min.js') }}"></script>
     <script src="{{ asset('front-assets/js/instantpages.5.1.0.min.js') }}"></script>
     <script src="{{ asset('front-assets/js/lazyload.17.6.0.min.js') }}"></script>
     <script src="{{ asset('front-assets/js/slick.min.js') }}"></script>
@@ -253,9 +256,9 @@
                 dataType: 'json',
                 success: function(response) {
                     if (response['status'] == false) {
-                        window.location.href = "{{route('userLogin')}}";
-                    } else{
-                        window.location.href = "{{route('home')}}";
+                        window.location.href = "{{ route('userLogin') }}";
+                    } else {
+                        window.location.href = "{{ route('home') }}";
                     }
                 }
             })
