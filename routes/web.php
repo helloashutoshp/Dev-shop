@@ -7,6 +7,7 @@ use App\Http\Controllers\admin\discountController;
 use App\Http\Controllers\admin\homeController;
 use App\Http\Controllers\admin\imageController;
 use App\Http\Controllers\admin\orderController;
+use App\Http\Controllers\admin\PagesController;
 use App\Http\Controllers\admin\productController;
 use App\Http\Controllers\admin\shoppingCharge;
 use App\Http\Controllers\admin\subCategoryController;
@@ -154,6 +155,17 @@ Route::group(['prefix' => '/admin'], function () {
         Route::get('/orders', [orderController::class, 'orders'])->name('admin-order-list');
         Route::get('/orders-detail/{id}', [orderController::class, 'orderDetail'])->name('admin-order-detail');
         Route::post('/status-update', [orderController::class, 'statusUpdate'])->name('status-update');
+
+        //user routes
+        Route::get('/users', [homeController::class, 'users'])->name('admin-user-list');
+
+        //pages routes
+        Route::get('/pages', [PagesController::class, 'index'])->name('admin-pages-list');
+        Route::get('/pages/create', [PagesController::class, 'create'])->name('admin-pages-create');
+        Route::post('/pages/store', [PagesController::class, 'store'])->name('admin-pages-store');
+        Route::get('/pages/edit/{id}', [PagesController::class, 'edit'])->name('admin-pages-edit');
+        Route::post('/pages/update', [PagesController::class, 'update'])->name('admin-pages-update');
+        Route::post('/pages/delete', [PagesController::class, 'destroy'])->name('admin-pages-delete');
     });
 });
 Route::get('/stripe', [paymentController::class, 'index'])->name('payment-index');
@@ -162,6 +174,3 @@ Route::post('/stripe', [paymentController::class, 'catch'])->name('payment-catch
 // Route::get('/test', function () {
 //     return orderMail(30);
 // });
-
-
-

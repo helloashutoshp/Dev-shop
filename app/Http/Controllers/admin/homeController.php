@@ -5,7 +5,7 @@ namespace App\Http\Controllers\admin;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
+use App\Models\User;
 
 class homeController extends Controller
 {
@@ -21,5 +21,14 @@ class homeController extends Controller
         return redirect()->route('admin-login');
     }
 
-    
+    public function users(Request $request)
+    {
+        $keyword = $request->get('keyword');
+        $query = User::where('role', 1);
+        if (!empty($keyword)) {
+            $query->where('name', 'like', "%$keyword%");
+        }
+        $users = $query->paginate(10);
+        return view('admin.users.list', ['users' => $users]);
+    }
 }
