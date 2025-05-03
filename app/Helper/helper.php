@@ -6,7 +6,7 @@ use App\Models\CountryModel;
 use App\Models\orderModel;
 use App\Models\ProductImg;
 use Illuminate\Support\Facades\Mail;
-
+use App\Models\Page;
 function getCategory()
 {
     $category = Cate::orderby('name', 'ASC')->with('subCategory')->where('status', 1)->where('showHome', 'Yes')->get();
@@ -32,4 +32,9 @@ function orderMail($id)
 
 function getCountryName($id){
     return CountryModel::where('id',$id)->first();
+}
+
+function getPage(){
+    $page = Page::orderBy('name','ASC')->get();
+    return $page;
 }

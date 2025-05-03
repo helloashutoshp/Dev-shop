@@ -45,6 +45,7 @@ Route::post('/checkout', [shopController::class, 'checkOutStore'])->name('user-c
 Route::get('/thank-you', [shopController::class, 'thankyou'])->name('user-thank');
 Route::get('/country-change', [shopController::class, 'countryChange'])->name('countryChange');
 Route::post('/add-wishlist', [shopController::class, 'addWishlist'])->name('add.wishlist');
+Route::get('/{slug}', [FrontHomeController::class, 'page'])->name('page');
 
 
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\front;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\Page;
 use Illuminate\Http\Request;
 
 class homeController extends Controller
@@ -13,5 +14,15 @@ class homeController extends Controller
         $feature_product = Product::where('isfeature', 'Yes')->where('status', 1)->get();
         $latest_product = Product::orderby('id', 'DESC')->with('product_img')->where('status', 1)->take(8)->get();
         return view('front.home', ['feature_product' => $feature_product ,'latest_product' => $latest_product]);
+    }
+
+    public function page($slug)
+    {
+        $page = Page::where('slug', $slug)->first();
+        if($page){
+            return view('front.page', ['page' => $page]);
+        }else{
+            abort(404);
+        }
     }
 }
