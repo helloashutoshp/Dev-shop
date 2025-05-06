@@ -147,6 +147,8 @@
                 dataType: 'json',
                 success: function(response) {
                     if (response.status == true) {
+                        $("input'], select").removeClass('is-invalid');
+                        $('.error').removeClass('invalid-feedback').html('');
                         window.location.href = "{{ route('user-profile') }}";
                     } else {
                         var errors = response['errors'];

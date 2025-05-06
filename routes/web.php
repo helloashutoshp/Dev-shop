@@ -46,8 +46,7 @@ Route::get('/thank-you', [shopController::class, 'thankyou'])->name('user-thank'
 Route::get('/country-change', [shopController::class, 'countryChange'])->name('countryChange');
 Route::post('/add-wishlist', [shopController::class, 'addWishlist'])->name('add.wishlist');
 Route::get('/{slug}', [FrontHomeController::class, 'page'])->name('page');
-
-
+Route::post('/contact-us', [FrontHomeController::class, 'contactus'])->name('contact.us');
 
 Route::group(['prefix' => '/account'], function () {
     Route::group(['middleware' => 'guest'], function () {
@@ -55,6 +54,10 @@ Route::group(['prefix' => '/account'], function () {
         Route::post('/login', [authController::class, 'loginAction'])->name('user-loginAction');
         Route::get('/register', [authController::class, 'register'])->name('userRegister');
         Route::post('/register', [authController::class, 'store'])->name('user-register-store');
+        Route::get('/forget-password', [authController::class, 'forgetPassword'])->name('forget-password');
+        Route::post('/forget-password', [authController::class, 'forgetPasswordAction'])->name('forget-password-action');
+        Route::get('/reset-password/{token}', [authController::class, 'resetPassword'])->name('reset-password');
+        Route::post('/reset-password', [authController::class, 'resetPasswordAction'])->name('reset-password-action');
     });
     Route::group(['middleware' => 'auth'], function () {
         Route::get('/profile', [authController::class, 'profile'])->name('user-profile');
@@ -67,6 +70,8 @@ Route::group(['prefix' => '/account'], function () {
         Route::get('/profile', [authController::class, 'profile'])->name('user-profile');
         Route::get('/wishlist', [shopController::class, 'wishlist'])->name('user-wishlist');
         Route::post('/remove-wishlist', [shopController::class, 'removeWishlist'])->name('remove.wishlist');
+        Route::get('/change-password', [authController::class, 'changePassword'])->name('change-password');
+        Route::post('/password/change', [authController::class, 'passwordChange'])->name('password.change');
     });
 });
 
@@ -92,6 +97,8 @@ Route::group(['prefix' => '/admin'], function () {
     Route::group(['middleware' => 'admin.auth'], function () {
         Route::get('/dashboard', [homeController::class, 'index'])->name('admin-dashboard');
         Route::get('/logout', [homeController::class, 'logout'])->name('admin-logout');
+        Route::get('/change-password', [adminController::class, 'changePassword'])->name('admin-change-password');
+        Route::post('/password/change', [adminController::class, 'passwordChange'])->name('admin-password-change');
 
         //category routes
         Route::get('/category/create', [categoryCotroller::class, 'create'])->name('admin-category-create');

@@ -10,6 +10,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
+use App\Mail\ResetPasswordMail;
 
 class authController extends Controller
 {
@@ -167,5 +172,104 @@ class authController extends Controller
             'status' => false,
             'errors' => $validate->errors()
         ]);
+    }
+
+    public function changePassword()
+    {
+        return view('front.changePassword');
+    }
+    public function passwordChange(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'old_password' => 'required',
+            'new_password' => 'required',
+            'confirm_password' => 'required|same:new_password',
+        ]);
+        if ($validate->passes()) {
+            $user = auth()->user();
+            $dbUser = User::find($user->id);
+            $check1 = Hash::check($request->old_password, $user->password);
+            $check2 = Hash::check($request->old_password, $dbUser->password);
+
+            if ($user && ($check1 || $check2)) {
+                $user->password = Hash::make($request->new_password);
+                $user->save();
+                session()->flash('success', 'Password updated');
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Password updated'
+                ]);
+            } else {
+                return response()->json([
+                    'status' => false,
+                    'errors' => ['old_password' => 'Old password is incorrect']
+                ]);
+            }
+        } else {
+            return response()->json([
+                'status' => false,
+                'errors' => $validate->errors()
+            ]);
+        }
+    }
+
+    public function forgetPassword()
+    {
+        return view('front.auth.forgetPassword');
+    }
+    public function forgetPasswordAction(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
+        ]);
+        if ($validate->passes()) {
+            $user = User::where('email', $request->email)->first();
+            $token = Str::random(60);
+            DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+            DB::table('password_reset_tokens')->insert([
+                'email' => $request->email,
+                'token' => $token,
+                'created_at' => Carbon::now()
+            ]);
+            $formData = [
+                'token' => $token,
+                'user' => $user,
+                'subject' => 'Reset Password'
+            ];
+            Mail::to($request->email)->send(new ResetPasswordMail($formData));
+            return redirect()->back()->with('success', 'Password reset link sent to your email');
+        }
+        return redirect()->back()->withErrors($validate->errors())->withInput($request->only('email'));
+    }
+
+    public function resetPassword($token)
+    {
+        $tokenData = DB::table('password_reset_tokens')->where('token', $token)->first();
+        if (!$tokenData) {
+            return redirect()->route('userLogin')->with('error', 'Invalid token');
+        }
+        return view('front.auth.resetPassword', ['token' => $token]);
+    }
+    public function resetPasswordAction(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'password' => 'required|min:8',
+            'password_confirmation' => 'required|same:password',
+        ]);
+        if ($validate->passes()) {
+            $token = $request->token;
+            $tokenData = DB::table('password_reset_tokens')->where('token', $token)->first();
+            if (!$tokenData) {
+                return redirect()->route('userLogin')->with('error', 'Invalid token');
+            }
+            $user = User::where('email', $tokenData->email)->first();
+            $user->password = Hash::make($request->password);
+            $user->save();
+            DB::table('password_reset_tokens')->where('email', $tokenData->email)->delete();
+            return redirect()->route('userLogin')->with('success', 'Password updated');
+        }
+        return redirect()->back()
+            ->withErrors($validate->errors())
+            ->withInput($request->only('password', 'password_confirmation'));
     }
 }
