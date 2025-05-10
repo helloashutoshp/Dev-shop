@@ -5,7 +5,9 @@ namespace App\Http\Controllers\admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Page;
+use App\Models\Rating;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Crypt;
 
 class PagesController extends Controller
 {
@@ -38,7 +40,7 @@ class PagesController extends Controller
         $page->save();
         session()->flash('success', 'Page created successfully');
         return response()->json(['status' => true, 'message' => 'Page created successfully']);
-    }   
+    }
 
     public function edit($id)
     {
@@ -74,5 +76,31 @@ class PagesController extends Controller
         $page->delete();
         session()->flash('success', 'Page deleted successfully');
         return response()->json(['status' => true, 'message' => 'Page deleted successfully']);
+    }
+
+    public function showRating(Request $request)
+    {
+
+        $search = $request->keyword;
+        if ($search) {
+            $ratings = Rating::with('product')
+                ->where('username', 'LIKE', '%' . $search . '%')
+                ->orWhereHas('product', function ($query) use ($search) {
+                    $query->where('title', 'LIKE', '%' . $search . '%');
+                });
+        } else {
+            $ratings = Rating::with('product');
+        }
+        $ratings = $ratings->paginate(10);
+        return view('admin.ratings.list', ['ratings' => $ratings]);
+    }
+
+    public function editStatus($id)
+    {
+        $decryptId = Crypt::decrypt($id);
+        $rating = Rating::find($decryptId);
+        $rating->status = $rating->status == 1 ? 0 : 1;
+        $rating->update();
+        return redirect()->back();
     }
 }

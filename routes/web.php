@@ -175,6 +175,10 @@ Route::group(['prefix' => '/admin'], function () {
         Route::get('/pages/edit/{id}', [PagesController::class, 'edit'])->name('admin-pages-edit');
         Route::post('/pages/update', [PagesController::class, 'update'])->name('admin-pages-update');
         Route::post('/pages/delete', [PagesController::class, 'destroy'])->name('admin-pages-delete');
+
+        //ratings routes
+        Route::get('/ratings', [PagesController::class, 'showRating'])->name('admin-rating-list');
+        Route::get('/edit-status/{id}', [PagesController::class, 'editStatus'])->name('edit-status');
     });
 });
 Route::get('/stripe', [paymentController::class, 'index'])->name('payment-index');
