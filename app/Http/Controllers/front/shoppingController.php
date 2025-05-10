@@ -8,6 +8,8 @@ use App\Models\Cate;
 use App\Models\Product;
 use App\Models\Subcategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use App\Models\Rating;
 
 class shoppingController extends Controller
 {
@@ -75,10 +77,16 @@ class shoppingController extends Controller
 
     public function product($slug)
     {
-        $product = Product::where('slug', $slug)->with('product_img')->first();
-        if($product == NULL){
+        $product = Product::where('slug', $slug)->withCount('rating')->withSum('rating', 'rating')->with(['product_img', 'rating'])->first();
+        if ($product == NULL) {
             abort(404);
         }
+        $avgRating = 0;
+        if ($product->rating_count > 0) {
+            $avgRating = $product->rating_sum_rating / $product->rating_count;
+            $avgRating = number_format($avgRating, 1);
+        }
+        $noRating = $product->rating_count;
         $items = collect();
         $prod = Product::find($product->id);
         $productArray = [];
@@ -88,8 +96,33 @@ class shoppingController extends Controller
             // dd($items->product_img->first());
         }
 
-        return view('front.product', ['product' => $product,'items' => $items]);
+        return view('front.product', ['product' => $product, 'items' => $items, 'avgRating' => $avgRating, 'noRating' => $noRating]);
     }
 
-    
+    public function reviewStore(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required',
+            'email' => 'required|email',
+            'rating' => 'required',
+            'review' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'errors' => $validator->errors()]);
+        }
+
+        if (Rating::where('product_id', $request->product_id)->where('email', $request->email)->exists()) {
+            session()->flash('error', 'You have already reviewed this product');
+            return response()->json(['status' => true, 'message' => 'You have already reviewed this product']);
+        }
+        $review = new Rating();
+        $review->username = $request->name;
+        $review->email = $request->email;
+        $review->rating = $request->rating;
+        $review->product_id = $request->product_id;
+        $review->comment = $request->review;
+        $review->save();
+        session()->flash('success', 'Review added successfully');
+        return response()->json(['status' => true, 'message' => 'Review added successfully']);
+    }
 }

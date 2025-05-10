@@ -12,4 +12,8 @@ class Product extends Model
     public function product_img(){
         return $this->hasMany(ProductImg::class);
     }
+
+    public function rating(){
+        return $this->hasMany(Rating::class)->where('status',0)->latest();
+    }
 }

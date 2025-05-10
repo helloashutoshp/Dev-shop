@@ -47,6 +47,7 @@ Route::get('/country-change', [shopController::class, 'countryChange'])->name('c
 Route::post('/add-wishlist', [shopController::class, 'addWishlist'])->name('add.wishlist');
 Route::get('/{slug}', [FrontHomeController::class, 'page'])->name('page');
 Route::post('/contact-us', [FrontHomeController::class, 'contactus'])->name('contact.us');
+Route::post('/review/store', [shoppingController::class, 'reviewStore'])->name('review.store');
 
 Route::group(['prefix' => '/account'], function () {
     Route::group(['middleware' => 'guest'], function () {
