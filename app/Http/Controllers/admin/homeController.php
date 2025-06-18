@@ -6,9 +6,11 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\orderModel;
 use App\Models\Product;
+use App\Models\Tempimage;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\File;
 
 class homeController extends Controller
 {
@@ -34,6 +36,18 @@ class homeController extends Controller
             ->whereDate('created_at', '>=', $thirtyDaysAgo)
             ->whereDate('created_at', '<=', $currentDate)
             ->sum('grandTotal');
+
+        //delete temp image 
+        $dayBeforeToday = Carbon::now()->subDays(1)->format('Y-m-d');
+        // dd($dayBeforeToday);
+        $tempImg = Tempimage::where('created_at', '<=', $dayBeforeToday)->get();
+        foreach ($tempImg as $img) {
+            $path = public_path('/temp/' . $img->name);
+            if (File::exists($path)) {
+                File::delete($path);
+            }
+            Tempimage::where('id', $img->id)->delete();
+        }
 
         return view('admin.dashboard', [
             'orders' => $orders,
