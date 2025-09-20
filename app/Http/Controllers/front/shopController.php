@@ -17,6 +17,7 @@ use Gloudemans\Shoppingcart\Facades\Cart;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Stripe\Climate\Order;
+use Stripe\StripeClient;
 
 class shopController extends Controller
 {
@@ -122,97 +123,154 @@ class shopController extends Controller
         $user_id = Auth::id();
     }
 
+
     public function checkOutStore(Request $req)
     {
+        // dd($req->all());
         $validator = Validator::make($req->all(), [
             'first_name' => 'required',
-            'last_name' => 'required',
-            'email' => 'required|email',
-            'country' => 'required',
-            'address' => 'required',
+            'last_name'  => 'required',
+            'email'      => 'required|email',
+            'country'    => 'required',
+            'address'    => 'required',
             'appartment' => 'required',
-            'city' => 'required',
-            'state' => 'required',
-            'zip' => 'required',
-            'mobile' => 'required|digits:10',
+            'city'       => 'required',
+            'state'      => 'required',
+            'zip'        => 'required',
+            'mobile'     => 'required|digits:10',
         ], [
             'mobile.digits' => 'Please enter a valid phone number',
-            'mobile.number' => 'Please enter a valid phone number',
         ]);
-        if ($validator->passes()) {
-            $user = Auth::user();
-            userShipping::updateOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'user_id' => $user->id,
-                    'firstName' => $req->first_name,
-                    'lastName' => $req->last_name,
-                    'email' => $req->email,
-                    'mobile' => $req->mobile,
-                    'country_id' => $req->country,
-                    'address' => $req->address,
-                    'appartment' => $req->appartment,
-                    'city' => $req->city,
-                    'state' => $req->state,
-                    'zip' => $req->zip,
-                ]
-            );
 
-            $order = new orderModel();
-            if ($req->payment == "p-one") {
-                $shipping = $req->shippingCharge;
-                $discount = 0;
-                $subtotal = Cart::subtotal(2, '.', '');
-                $total = (float) str_replace(',', '', Cart::subtotal()) + (float) $shipping;
-                $grandTotal = number_format($total, 2, '.', '');
-                $order->user_id = $user->id;
-                $order->shipping = $shipping;
-                $order->subtotal = $subtotal;
-                $order->grandTotal = $grandTotal;
-                $order->payment_status = "unpaid";
-                $order->firstName = $req->first_name;
-                $order->lastName = $req->last_name;
-                $order->email = $req->email;
-                $order->mobile = $req->mobile;
-                $order->country_id  = $req->country;
-                $order->address = $req->address;
-                $order->appartment = $req->appartment;
-                $order->city = $req->city;
-                $order->state = $req->state;
-                $order->zip = $req->zip;
-                $order->note = $req->order_notes;
-                $order->coupon_code = $req->code;
-                $order->grandTotal = str_replace(',', '', $req->totalVal);
-                $order->discount = str_replace(',', '', $req->totalDis);
-                $order->shipping = $req->shippingCharge;
-                $order->save();
-            }
-            foreach (Cart::content() as $item) {
-                // dd($item->id);
-                $orderItem = new oredrItem();
-                $orderItem->order_id  = $order->id;
-                $orderItem->product_id   = $item->id;
-                $orderItem->name  = $item->name;
-                $orderItem->qty  = $item->qty;
-                $orderItem->price  = $item->price;
-                $orderItem->total  = $item->qty * $item->price;
-                $orderItem->save();
-            }
-            orderMail($order->id);
-            Cart::Destroy();
-            session()->forget('discount');
-            return response()->json([
-                'status' => true,
-                'message' => "vlaidation done",
-
-            ]);
-        } else {
+        if (!$validator->passes()) {
             return response()->json([
                 'status' => false,
                 'errors' => $validator->errors()
             ]);
         }
+
+        $user = Auth::user();
+
+        // 1️⃣ Save/Update Shipping Info
+        userShipping::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'user_id'   => $user->id,
+                'firstName' => $req->first_name,
+                'lastName'  => $req->last_name,
+                'email'     => $req->email,
+                'mobile'    => $req->mobile,
+                'country_id' => $req->country,
+                'address'   => $req->address,
+                'appartment' => $req->appartment,
+                'city'      => $req->city,
+                'state'     => $req->state,
+                'zip'       => $req->zip,
+            ]
+        );
+
+        // 2️⃣ Calculate Totals
+        $shipping   = (float)$req->shippingCharge;
+        $subtotal   = (float) str_replace(',', '', Cart::subtotal());
+        $discount   = (float) str_replace(',', '', $req->totalDis ?? 0);
+        $grandTotal = (float) str_replace(',', '', $req->totalVal ?? ($subtotal + $shipping - $discount));
+
+        // 3️⃣ Create Order (initially unpaid)
+        $order = new orderModel();
+        $order->user_id       = $user->id;
+        $order->shipping      = $shipping;
+        $order->subtotal      = $subtotal;
+        $order->grandTotal    = $grandTotal;
+        $order->discount      = $discount;
+        $order->payment_status = "unpaid";
+        $order->firstName     = $req->first_name;
+        $order->lastName      = $req->last_name;
+        $order->email         = $req->email;
+        $order->mobile        = $req->mobile;
+        $order->country_id    = $req->country;
+        $order->address       = $req->address;
+        $order->appartment    = $req->appartment;
+        $order->city          = $req->city;
+        $order->state         = $req->state;
+        $order->zip           = $req->zip;
+        $order->note          = $req->order_notes;
+        $order->coupon_code   = $req->code;
+        $order->save();
+
+        // 4️⃣ Save Each Cart Item
+        foreach (Cart::content() as $item) {
+            $orderItem = new oredrItem();
+            $orderItem->order_id  = $order->id;
+            $orderItem->product_id = $item->id;
+            $orderItem->name      = $item->name;
+            $orderItem->qty       = $item->qty;
+            $orderItem->price     = $item->price;
+            $orderItem->total     = $item->qty * $item->price;
+            $orderItem->save();
+        }
+
+        // 5️⃣ Handle Payment Type
+        if ($req->payment === "p-one") {
+            // Cash on Delivery
+            orderMail($order->id);
+            Cart::destroy();
+            session()->forget('discount');
+
+            return response()->json([
+                'status' => true,
+                'message' => "Order placed with COD successfully!"
+            ]);
+        } elseif ($req->payment === "p-two") {
+            // Stripe Checkout
+            $stripe = new StripeClient(env('STRIPE_SECRET_KEY'));
+
+            // Convert grandTotal to cents (Stripe needs integer amount in smallest currency unit)
+            $amountInCents = (int) round($grandTotal * 100);
+
+            // Build line items from cart
+            $lineItems = [];
+            foreach (Cart::content() as $item) {
+                $lineItems[] = [
+                    'price_data' => [
+                        'currency'     => 'usd',
+                        'product_data' => ['name' => $item->name],
+                        'unit_amount'  => (int) round($item->price * 100),
+                    ],
+                    'quantity' => $item->qty,
+                ];
+            }
+            // Add shipping as separate line item if needed
+            if ($shipping > 0) {
+                $lineItems[] = [
+                    'price_data' => [
+                        'currency'     => 'usd',
+                        'product_data' => ['name' => 'Shipping'],
+                        'unit_amount'  => (int) round($shipping * 100),
+                    ],
+                    'quantity' => 1,
+                ];
+            }
+
+            $session = $stripe->checkout->sessions->create([
+                'success_url' => route('stripe.success', ['order' => $order->id]) . '?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url'  => route('stripe.cancel', ['order' => $order->id]),
+                'mode'        => 'payment',
+                'line_items'  => $lineItems,
+            ]);
+
+            // Optionally save the session id to order for verification
+            // $order->stripe_session_id = $session->id;
+            $order->save();
+            return response()->json([
+                'status'      => true,
+                'payment'     => 'p-two',
+                'redirectUrl' => $session->url, // This is the Stripe-hosted checkout URL
+            ]);
+        }
+
+        return response()->json(['status' => false, 'message' => 'Invalid payment method.']);
     }
+
 
     public function thankyou()
     {

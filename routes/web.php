@@ -16,6 +16,7 @@ use App\Http\Controllers\front\authController;
 use App\Http\Controllers\front\homeController as FrontHomeController;
 use App\Http\Controllers\front\shopController;
 use App\Http\Controllers\front\shoppingController;
+use App\Http\Controllers\front\stripeController;
 use App\Http\Controllers\paymentController;
 use Illuminate\Support\Facades\Route;
 
@@ -48,6 +49,12 @@ Route::post('/add-wishlist', [shopController::class, 'addWishlist'])->name('add.
 Route::get('/{slug}', [FrontHomeController::class, 'page'])->name('page');
 Route::post('/contact-us', [FrontHomeController::class, 'contactus'])->name('contact.us');
 Route::post('/review/store', [shoppingController::class, 'reviewStore'])->name('review.store');
+
+// Success Route (after successful payment)
+Route::get('/stripe/success/{order}', [stripeController::class, 'success'])->name('stripe.success');
+
+// Cancel Route (if the user cancels payment)
+Route::get('/stripe/cancel/{order}', [StripeController::class, 'cancel'])->name('stripe.cancel');
 
 Route::group(['prefix' => '/account'], function () {
     Route::group(['middleware' => 'guest'], function () {
